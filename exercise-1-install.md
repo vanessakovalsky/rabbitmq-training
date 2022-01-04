@@ -60,3 +60,13 @@ docker-compose up -d
 !(Accueil RabbitMQ)[images/rabbitmq_dashboard-min-1024x563.png]
 
 * Il est également possible d'installer RabbitMQ de nombreuses autres manières directement sur votre poste ou chez des fournisseurs, voir la documentation officielle ici : https://www.rabbitmq.com/download.html 
+## Installer l'outil ligne de commande
+* Nous avons besoin d'installer *rabbitmqadmin* pour pouvoir travailler sur notre machine avec la ligne de commande RabbitMQ : 
+```
+curl http://localhost:15672/cli/rabbitmqadmin > /usr/local/bin/rabbitmqadmin
+chmod +x /usr/local/bin/rabbitmqadmin
+
+# Check that it works:
+rabbitmqadmin list exchanges 
+```
+* Votre environnement est maintenant prêt à être utilisé
