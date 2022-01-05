@@ -47,7 +47,7 @@ rabbitmqadmin publish exchange=amq.default routing_key=hello payload="hello, wor
 ### Via le CLI Admin
 * Utilisons maintenant le CLI Admin pour lire le message :
 ```
-rabbitmqadmin get queue=hello requeue=false
+rabbitmqadmin get queue=hello ackmode=ack_requeue_false
 ```
 * Cette fois nous avons choisi de ne pas remettre dans la queue le message.
 

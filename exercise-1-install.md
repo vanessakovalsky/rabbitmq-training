@@ -52,12 +52,12 @@ docker-compose up -d
 
 * Ouvrir alors de nouveau la page, et vous obtenez une page ressemblant à celle-ci
 
-!(Login RabbitMQ)[images/rabbitmq_login-min-1024x561.png]
+![Login RabbitMQ](images/rabbitmq_login-min-1024x561.png)
 
 * Les informations de connexion se trouvent dans les variables d'environnement définies dans le docker-compose.yaml
 * Une fois connecté vous obtenez l'écran suivant :
 
-!(Accueil RabbitMQ)[images/rabbitmq_dashboard-min-1024x563.png]
+![Accueil RabbitMQ](images/rabbitmq_dashboard-min-1024x563.png)
 
 * Il est également possible d'installer RabbitMQ de nombreuses autres manières directement sur votre poste ou chez des fournisseurs, voir la documentation officielle ici : https://www.rabbitmq.com/download.html 
 ## Installer l'outil ligne de commande
