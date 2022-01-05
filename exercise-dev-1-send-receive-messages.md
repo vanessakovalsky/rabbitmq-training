@@ -13,7 +13,7 @@ Pour cela il s'appuie sur les 3 concepts fondamentaux suivants :
 * queue (ou file d'attente) : c'est l'endroit par lequel le message transite
 * consommateur ou récepteur : c'est lui qui reçoit et traite le message 
 
-!(RabbitMQ - Simple Queue)[https://www.rabbitmq.com/img/tutorials/python-one.png]
+![RabbitMQ - Simple Queue](https://www.rabbitmq.com/img/tutorials/python-one.png)
 
 ## Installation de la bibliothèque cliente Java
 
@@ -29,7 +29,7 @@ Pour cela il s'appuie sur les 3 concepts fondamentaux suivants :
 ```
 * Ajouter un peu de code dans la classe, par exemple ici je rajoute une fonction hello :
 ```java
-package com.kovalibre.demorabbitmq;
+package org.springframework.amqp.demorabbitmq;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -59,99 +59,174 @@ public class DemoRabbitmqApplication {
 * Vous pouvez accéder à votre application sur http://localhost:8080
 
 
+## Configurer notre application
+
+* Renommer le fichier application.properties en application.yml et ajouter le contenu suivant : 
+```yaml
+spring:
+  profiles:
+    active: usage_message
+
+logging:
+  level:
+    org: ERROR
+
+demorabbitmq:
+  client:
+    duration: 10000
+```
+* Créer un package *exercise*, ajouter le fichier *ExerciseConfig.java* et ajouter le code suivant :
+```java
+// Sender
+package org.springframework.amqp.demorabbitmq.exercise;
+
+import org.springframework.amqp.core.Queue;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+
+@Profile({"exercise","hello-world"})
+@Configuration
+public class ExerciseConfig {
+
+    @Bean
+    public Queue hello() {
+        return new Queue("hello");
+    }
+
+    @Profile("receiver")
+    @Bean
+    public ExerciseReceiver receiver() {
+        return new ExerciseReceiver();
+    }
+
+    @Profile("sender")
+    @Bean
+    public ExerciseSender sender() {
+        return new ExerciseSender();
+    }
+}
+
+```
+* Nous ajoutons dans la classe *DemoRabbitmqApplication*  les imports nécessaires pour utiliser la ligne de commande ainsi que l'appel à notre classe via la ligne de commande
+```java
+[...]
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.EnableScheduling;
+[...]
+
+    @Profile("usage_message")
+    @Bean
+    public CommandLineRunner usage() {
+        return args -> {
+            System.out.println("This app uses Spring Profiles to
+                control its behavior.\n");
+            System.out.println("Sample usage: java -jar
+                demorabbitmq.jar
+                --spring.profiles.active=hello-world,sender");
+        };
+    }
+
+    @Profile("!usage_message")
+    @Bean
+    public CommandLineRunner exercuse() {
+        return new DemoRabbitMQExerciseRunner();
+    }
+```
+* Puis nous définissons la classe *DemoRabbitMQExerciseRunner* comme suit : 
+```java
+package org.springframework.amqp.demorabbitmq.exercise;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.ConfigurableApplicationContext;
+
+public class DemoRabbitMQExerciseRunner implements CommandLineRunner {
+
+    @Value("${demorabbitmq.client.duration:0}")
+    private int duration;
+
+    @Autowired
+    private ConfigurableApplicationContext ctx;
+
+    @Override
+    public void run(String... arg0) throws Exception {
+        System.out.println("Ready ... running for " + duration + "ms");
+        Thread.sleep(duration);
+        ctx.close();
+    }
+}
+```
+* Notre application est prête pour que l'on ajoute l'envoi d'un message
+
 ## Envoyer un message
+* Nous allons définir le contenu de la classe d'envoi *ExerciseSender* qui se chargera d'envoyer le message à RabbitMQ : 
+```java
+// Sender
+package org.springframework.amqp.demorabbitmq.exercise;
 
-* Nous avons besoin d'ajouter des classes à importer pour envoyer des messages.
-* Créer un fichier *Send.java* et ajouter les dépendance suivantes :
-```java
-import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.Channel;
-```
-* Puis créer la classe et définir un nom pour la queue de message :
-```java
-public class Send {
-  private final static String QUEUE_NAME = "bonjour";
-  public static void main(String[] argv) throws Exception {
-      ...
-  }
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
+
+public class ExerciseSender {
+
+    @Autowired
+    private RabbitTemplate template;
+
+    @Autowired
+    private Queue queue;
+
+    @Scheduled(fixedDelay = 1000, initialDelay = 500)
+    public void send() {
+        String message = "Hello World!";
+        this.template.convertAndSend(queue.getName(), message);
+        System.out.println(" [x] Sent '" + message + "'");
+    }
 }
 ```
-* Puis nous essayos de nous connecter sur le serveur local : 
-```java
-ConnectionFactory factory = new ConnectionFactory();
-factory.setHost("localhost");
-try (Connection connection = factory.newConnection();
-     Channel channel = connection.createChannel()) {
-
-}
-```
-* L'objet connexion initialise la connexion socket et s'occupe de la negociation de version du protocole et de l'authentification. 
-* Ensuite nous avons dfinis un objet channel, qui est l'objet principal de cette API. Il n'est pas nécessaire de fermer la connexion et le channel, puisque les deux classes utilisée utilie *java.io.Closeable* qui s'en charge 
-* Pour envoyer un message, nous devons déclarer une queue qui fait l'envoi pour nous, puis nous pouvons publier un message sur la queue. 
-* Ajouter le code suivant dans le bloc *try* :
-```java
-channel.queueDeclare(QUEUE_NAME, false, false, false, null);
-String message = "Bonjour à tous !";
-channel.basicPublish("", QUEUE_NAME, null, message.getBytes());
-System.out.println(" [x] Sent '" + message + "'");
-```
-* La déclaration de queue ne créé la queu que si celle-ci n'existe pas déjà. Le contenu du message est un tableau de bytes vous permettant d'encoder ce que vous souhaiter. 
-* Votre message est maintenant envoyé (en cas d'erreur, vérifier l'espace disque disponible, et les logs pour trouver ce qui ne fonctionne pas.)
+* Nous auto-chargeons la queue qui a été configuré dans ExerciseConfig et nous utilisons le modèle *RabbitTemplate* pour charger le client RabbitMQ. 
+* Dans la méthode *send* nous utilisons la méthode du modèle *convertAndSend* pour envoyer notre message à la queue choisie.
+* Votre classe est maintenant prête à envoyer un message. 
 
 ## Recevoir le message
 
-* Nous allons maintenant définir une classe qui va récupérer le message dans la queue.
-* Pour cela créer un fichier *Recv.java* avec les imports suivants : 
+* Nous allons maintenant définir la classe qui se charge de receptionner le message et de l'afficher
 ```java
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.DeliverCallback;
-```
-* Il s'agit des mêmes imports que pour l'envoi, à l'execption de l'interface *DeliverCallback* qui permet de mettre dans le tampon les messages qui nous sont envoyés par le serveur
-* Comme pour l'envoi, nous ouvrons une connexion et un chanel et déclarons la queue à utiliser pour recevoir les messages. 
-```java
-public class Recv {
+package org.springframework.amqp.demorabbitmq.exercise;
 
-  private final static String QUEUE_NAME = "bonjour";
+import org.springframework.amqp.rabbit.annotation.RabbitHandler;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 
-  public static void main(String[] argv) throws Exception {
-    ConnectionFactory factory = new ConnectionFactory();
-    factory.setHost("localhost");
-    Connection connection = factory.newConnection();
-    Channel channel = connection.createChannel();
+@RabbitListener(queues = "hello")
+public class ExerciseReceiver {
 
-    channel.queueDeclare(QUEUE_NAME, false, false, false, null);
-    System.out.println(" [*] En attente de message. Pour quitter appuyer sur CTRL+C");
-
-  }
+    @RabbitHandler
+    public void receive(String in) {
+        System.out.println(" [x] Received '" + in + "'");
+    }
 }
 ```
-* La queue est également redéclarer ici, cela permet d'éviter si le receveur est démarré avant l'envoyeur de ne pas essayer de recevoir des messages d'une queue qui n'existe pas encore.
-* Nous n'utilisons pas de bloc *try* car en l'absence de message à recevoir cela fermerait la connexion et le channel et quitterait le programme. Ce qui serait contre-productif alors que notre recepteur attend des messages.
-* Nous allons maintenant  demander au serveur de nous envoyer les messages depuis la queue. Puisque l'envoie des message est fait de manière asynchrone, nous fournissons un *callback* sous la forme d'un objet qui stockera les messages en attendant que nous les utilisisons. 
-```java
-DeliverCallback deliverCallback = (consumerTag, delivery) -> {
-    String message = new String(delivery.getBody(), "UTF-8");
-    System.out.println(" [x] Received '" + message + "'");
-};
-channel.basicConsume(QUEUE_NAME, true, deliverCallback, consumerTag -> { });
-```
-* Notre code est prêt
+* Nous utilisons l'annotaiton *@RabbitListerner* qui permet d'utiliser le listener du client et lui passons le nom de la queue que nous souhaitons suivre.
+* Puis nous annotons notre méthode *receive* avec l'annotation *@RabbitHandler* ce qui permet de récupérer le payload envoyé à la queue que nous utilisons pour afficher le contenu du message.
 
-## Exécuter notre code
+## Lancer l'application
 
-* Pour executer notre code commençons par le compiler : 
+* Il ne nous reste plus qu'à exécuter notre application.
+* Commençons par la compiler avec maven
 ```
-javac -cp amqp-client-5.7.1.jar Send.java Recv.java
+./mvnw clean package
 ```
-* Puis pour exécuter le receveur : 
+* Puis nous lançons le recepteur avec la commande : 
 ```
-java -cp .:amqp-client-5.7.1.jar:slf4j-api-1.7.26.jar:slf4j-simple-1.7.26.jar Recv
+java -jar target/demorabbitmq.jar --spring.profiles.active=hello-world,receiver
 ```
-* Et enfin la classe d'envoi (à éxecuter dans un autre terminal) : 
+* Enfin, dans un autre terminal, nous envoyons le message 
 ```
-java -cp .:amqp-client-5.7.1.jar:slf4j-api-1.7.26.jar:slf4j-simple-1.7.26.jar Send
+java -jar target/demorabbitmq.jar --spring.profiles.active=hello-world,sender
 ```
-* Vous devriez alors voir dans le terminal qui exécute le recepteur le message défini s'afficher.
+* Dans le terminal du récepteur le message devrait s'afficher.
