@@ -35,6 +35,13 @@ services:
       - RABBITMQ_ERLANG_COOKIE=${RABBITMQ_ERLANG_COOKIE}
     networks:
       - network
+  perftest:
+    # https://hub.docker.com/r/pivotalrabbitmq/perf-test/tags
+    image: pivotalrabbitmq/perf-test:latest
+    networks:
+      - network
+    environment:
+      URI: "amqp://guest:guest@rabbitmq1:5672/%2f"
 networks:
   # Declare our private network.  We must declare one for the magic
   # Docker DNS to work, but otherwise its default settings are fine.

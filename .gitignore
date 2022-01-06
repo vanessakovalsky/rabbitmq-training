@@ -1,1 +1,3 @@
 bin/rabbitmqadmin
+cluster2/.env
+cluster2/docker-compose.yaml
