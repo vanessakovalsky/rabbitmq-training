@@ -18,6 +18,7 @@ https://ypereirareis.github.io/blog/2017/04/03/rabbitmq-high-available-cluster-h
 
 ## Solution possible pour éviter les messages en boucles (retry)
 https://blog.eleven-labs.com/fr/rabbitmq-partie-2-la-maitrise/#retry-dead-letter
+https://blog.eleven-labs.com/fr/publier-consommer-reessayer-des-messages-rabbitmq/ 
 
 ## Gérer ses logs RabbitMQ dans un ELK
 https://www.bejean.eu/2021/03/20/gerer-vos-logs-rabbitmq-dans-un-elk
