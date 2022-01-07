@@ -29,9 +29,12 @@ Cet exercice a pour objectifs :
 
 * [Prometheus](https://prometheus.io/) est un outil open source qui permet de stocker des métriques de monitoring. [Grafana](https://grafana.com/) est un outil open source qui permet d'afficher et de créer des tableaux de bords avec des graphiques. Les deux sont souvent utilisés ensemble pour monitorer des solutions de manière souple et dynamique afin de remplacer des systèmes vieillissant de monitoring de type Zabbix ou Nagios. 
 * Pour pouvoir utiliser Prometheus avec RabbitMQ il est nécessaire d'activer le plugin *rabbitmq_prometheus* qui se chargera de récupérer les données de monitoring, de les mettre dans le bon format et de les transmettre à Prometheus. 
-* Nous avons également besoin d'un cluster RabbitMQ et des metriques à exploiter. Pour cela nous utilisons le [docker-compose.yaml fourni par RabbitMQ](https://github.com/rabbitmq/rabbitmq-server/blob/master/deps/rabbitmq_prometheus/docker/docker-compose-overview.yml) que nous téléchargeons et lançons avec la commande : 
+* Nous avons également besoin d'un cluster RabbitMQ et des metriques à exploiter. Pour cela nous utilisons le [docker-compose.yaml fourni par RabbitMQ](https://github.com/rabbitmq/rabbitmq-server/blob/master/deps/rabbitmq_prometheus/docker/docker-compose-overview.yml) a partir d'un git clone : 
 ```
-docker-compose up -d
+git clone https://github.com/rabbitmq/rabbitmq-server 
+cd rabbitmq-server/deps/rabbitmq_prometheus/docker
+docker-compose -f docker-compose-metrics.yml up -d
+docker-compose -f docker-compose-overview.yml up -d
 ```
 * Puis nous lançons un conteneur qui contient grafana à partir du deuxième [docker-compose.yaml fourni par RabbitMQ](https://github.com/rabbitmq/rabbitmq-server/blob/master/deps/rabbitmq_prometheus/docker/docker-compose-metrics.yml) que nous téléchargeons également et lançons avec la même commande.
 * Enfin nous accédons à Grafana sur l'URL : http://localhost:3000 et obtenons une tableau de bord ressemblant à : 
