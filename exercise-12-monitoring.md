@@ -54,4 +54,3 @@ docker-compose -f docker-compose-overview.yml up -d
 * Il est bien sur possible de [configurer Prometheus](https://prometheus.io/docs/prometheus/latest/configuration/configuration/) et de [créer ses propres tableaux de bord dans Grafana ou d'utiliser des tableaux de bords prédéfinis différents](https://grafana.com/docs/)
 
 -> Il ne vous reste plus qu'à définir les éléments spécifiques à votre contexte que vous souhaitez monitorer, à choisir votre outil de monitoring et à mettre en place le monitoring
-
